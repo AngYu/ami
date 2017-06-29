@@ -1,4 +1,5 @@
 import shadersInterpolation from './interpolation/shaders.interpolation';
+import shadersIntersectBox from './helpers/shaders.helpers.intersectBox';
 
 export default class ShadersFragment {
 
@@ -10,7 +11,7 @@ export default class ShadersFragment {
   }
 
   functions() {
-    if (this._main === '') {
+    if(this._main === '') {
       // if main is empty, functions can not have been computed
       this.main();
     }
@@ -29,7 +30,7 @@ export default class ShadersFragment {
       let uniform = this._uniforms[property];
       content += `uniform ${uniform.typeGLSL} ${property}`;
 
-      if (uniform && uniform.length) {
+      if(uniform && uniform.length) {
         content += `[${uniform.length}]`;
       }
 
@@ -42,8 +43,21 @@ export default class ShadersFragment {
   main() {
     // need to pre-call main to fill up the functions list
     this._main = `
-void main(void) {
+	void getIntensity(in vec3 dataCoordinates, out float intensity, out vec3 gradient){
 
+  vec4 dataValue = vec4(0., 0., 0., 0.);
+  ${shadersInterpolation(this, 'dataCoordinates', 'dataValue', 'gradient')}
+
+  intensity = dataValue.r;
+
+  // rescale/slope
+  intensity = intensity*uRescaleSlopeIntercept[0] + uRescaleSlopeIntercept[1];
+  // window level
+  float windowMin = uWindowCenterWidth[0] - uWindowCenterWidth[1] * 0.5;
+  intensity = ( intensity - windowMin ) / uWindowCenterWidth[1];
+}
+void main(void) {
+/*
   // draw border if slice is cropped
   // float uBorderDashLength = 10.;
 
@@ -66,29 +80,71 @@ void main(void) {
       return;
     }
   }
-
+*/
   // get texture coordinates of current pixel
-  vec4 dataCoordinates = uWorldToData * vPos;
-  vec3 currentVoxel = vec3(dataCoordinates.x, dataCoordinates.y, dataCoordinates.z);
-  vec4 dataValue = vec4(0., 0., 0., 0.);
-  vec3 gradient = vec3(0., 0., 0.);
-  ${shadersInterpolation(this, 'currentVoxel', 'dataValue', 'gradient')}
+   vec4 dataValue = vec4(0., 0., 0., 0.);
 
   // how do we deal wil more than 1 channel?
   if(uNumberOfChannels == 1){
-    float intensity = dataValue.r;
+	  
+	  const int maxSteps = 1024;
 
-    // rescale/slope
-    intensity = intensity*uRescaleSlopeIntercept[0] + uRescaleSlopeIntercept[1];
+	int  parameter = -uThinkness;
+	int count = 0;
+	float maxValue = -9999.0;
+	vec4 tempVpos = vPos;
+if(uThinkness !=0){
+  for(int rayStep = -maxSteps; rayStep < maxSteps; rayStep++){
+	
+	if(uOrientation == 0)
+	{
+			tempVpos.x =vPos.x+float(parameter)*uSpacing.x;
+	}
+	else if(uOrientation == 1)
+	{
+			tempVpos.z =vPos.z+float(parameter)*uSpacing.z;
+	}
+	else if(uOrientation == 2)
+	{
+			tempVpos.y =vPos.y+float(parameter)*uSpacing.y;
+	}
+	//console.log(tempVpos.z);
+	vec4 dataCoordinates = uWorldToData * tempVpos;
+    vec3 currentVoxel = vec3(dataCoordinates.x, dataCoordinates.y, dataCoordinates.z);
+    float intensity = 0.0;
+    vec3 gradient = vec3(0., 0., 0.);
+    getIntensity(currentVoxel, intensity, gradient);
 
-    float windowMin = uWindowCenterWidth[0] - uWindowCenterWidth[1] * 0.5;
-    float windowMax = uWindowCenterWidth[0] + uWindowCenterWidth[1] * 0.5;
-    intensity = ( intensity - windowMin ) / uWindowCenterWidth[1];
+   
+	
+
+	if(intensity > maxValue)
+	{
+		maxValue = intensity;
+	}
+	
+	if(count > uThinkness*2) break;
+	count++;
+	parameter ++;
+  }
+   }
+  else
+  {
+	  vec4 dataCoordinates = uWorldToData * vPos;
+    vec3 currentVoxel = vec3(dataCoordinates.x, dataCoordinates.y, dataCoordinates.z);
+    float intensity = 0.0;
+    vec3 gradient = vec3(0., 0., 0.);
+    getIntensity(currentVoxel, intensity, gradient);
+	maxValue = intensity;
+  }
+  
+    float intensity = maxValue;
+
 
     dataValue.r = dataValue.g = dataValue.b = intensity;
     dataValue.a = 1.0;
   }
-
+ 
   // Apply LUT table...
   //
   if(uLut == 1){

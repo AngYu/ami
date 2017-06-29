@@ -49,14 +49,20 @@ export default class extends THREE.Object3D {
       if (orientation===0) {
         stackHelper.border.color = 0xF44336;
         this._xSlice = stackHelper;
+		this._xSlice._slice._uniforms.uOrientation.value = 0;
+		console.log(orientation);
       } else if (orientation===1) {
         stackHelper.bbox.visible = false;
-        stackHelper.border.color = 0x4CAF50;
+        stackHelper.border.color = 0x4CAF50;		
         this._ySlice = stackHelper;
+		this._ySlice._slice._uniforms.uOrientation.value = 1;
+		console.log(orientation);
       } else {
         stackHelper.bbox.visible = false;
         stackHelper.border.color = 0x2196F3;
         this._zSlice = stackHelper;
+		this._zSlice._slice._uniforms.uOrientation.value = 2;
+		console.log(orientation);
       }
 
       this._centerLPS = stackHelper.stack.worldCenter();
@@ -71,7 +77,7 @@ export default class extends THREE.Object3D {
       const loader = new LoadersVolume(this._progressbarContainer);
       return loader.load(this.file).then(() => {
         return new Promise((resolve, reject) => {
-          if (loader.data.length <= 0) {
+          if(loader.data.length <= 0) {
             return reject({message: `No data loaded: ${loader.data}.`});
           }
 

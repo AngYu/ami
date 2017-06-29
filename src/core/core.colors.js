@@ -1,18 +1,6 @@
-/**
- * Colors utility functions
- */
 export default class Colors {
 
-  /**
-   * Convert LAB to XYZ
-   * http://www.easyrgb.com/index.php?X=MATH&H=08#text8
-   *
-   * @param {*} l
-   * @param {*} a
-   * @param {*} b
-   *
-   * @return {*}
-   */
+  // http://www.easyrgb.com/index.php?X=MATH&H=08#text8
   static cielab2XYZ(l, a, b) {
     const refX = 95.047;
     const refY = 100.00;
@@ -43,15 +31,6 @@ export default class Colors {
     return [refX * x, refY * y, refZ * z];
   }
 
-  /**
-   * Convert XYZ to RGB space
-   *
-   * @param {*} x
-   * @param {*} y
-   * @param {*} z
-   *
-   * @return {*}
-   */
   static xyz2RGB(x, y, z) {
     x /= 100;
     y /= 100;
@@ -85,17 +64,8 @@ export default class Colors {
     return [r, g, b];
   }
 
-  /**
-   * Convert LAB to RGB
-   *
-   * @param {*} l
-   * @param {*} a
-   * @param {*} b
-   *
-   * @return {*}
-   */
   static cielab2RGB(l = 50, a = 0, b = 0) {
-    if (!(l >= 0 && l <= 100)) {
+    if(!(l >= 0 && l <= 100)) {
       return null;
     }
 

@@ -24,6 +24,21 @@ export default class ShadersUniform {
         value: [0, 0, 0],
         typeGLSL: 'ivec3',
       },
+	   'uSpacing': {
+          type: 'v3',
+        value: [0.0, 0.0, 0.0],
+        typeGLSL: 'vec3',
+      },
+	  'uOrientation': {
+        type: 'i',
+        value: 0,
+        typeGLSL: 'int',
+      },
+	  'uThinkness': {
+        type: 'i',
+        value: 0,
+        typeGLSL: 'int',
+      },
       'uWorldToData': {
         type: 'm4',
         value: new THREE.Matrix4(),
